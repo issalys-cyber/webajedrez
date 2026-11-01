@@ -5,6 +5,24 @@
 
 ---
 
+## 0. Estado real (ya publicado)
+
+| | |
+|---|---|
+| **Web en producción** | **https://webajedrez-f11ajedrez.vercel.app** |
+| Repositorio | https://github.com/issalys-cyber/webajedrez (público, AGPL-3.0) |
+| Proyecto Vercel | `webajedrez` · scope `f11ajedrez` · Root Directory `apps/web` |
+| Validación | 24/24 comprobaciones end-to-end contra la URL de producción |
+| Coste | **0 €** (sin tarjeta) |
+
+Tres cosas que hubo que ajustar al desplegar de verdad, para que no vuelvan a morder:
+
+1. **Root Directory = `apps/web`.** Es un monorepo: si se deja en la raíz, Vercel busca el `.next` en el sitio equivocado y el build falla con `routes-manifest.json couldn't be found`. Se fija con `vercel project update <proyecto> --root-directory apps/web --yes` (sin `--yes` pide confirmación y **no** aplica el cambio).
+2. **Protección de despliegues desactivada.** El proyecto nace con *Vercel Authentication* (`ssoProtection: all_except_custom_domains`), que hace que **todas** las URLs `*.vercel.app` redirijan a un login de Vercel — incluida producción. Se consulta con `vercel project protection <proyecto>` y se quita con `vercel project protection disable <proyecto> --sso`.
+3. **Pendiente: despliegue automático en cada push.** `vercel git connect` falla con *"Failed to connect issalys-cyber/webajedrez"* porque la **app de Vercel no está instalada en la cuenta de GitHub**. Se instala en <https://github.com/apps/vercel/installations/new> y después se repite `vercel git connect`. Mientras tanto, los despliegues son manuales: `npx vercel deploy --prod --yes` desde la raíz del repo.
+
+---
+
 ## 1. Respuesta corta
 
 Hay **dos cosas distintas** que "publicar":

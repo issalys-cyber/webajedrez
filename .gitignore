@@ -41,3 +41,5 @@ Thumbs.db
 # artefactos de las pruebas (se regeneran con `npm run smoke`)
 /shots/
 /test-results/
+
+.vercel

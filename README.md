@@ -2,7 +2,8 @@
 
 Web para jugar al ajedrez. Jugador local, contra el motor y partidas online 1v1.
 
-**Estado:** Fase 0 completada y verificada. Tablero local jugable: reglas completas, PGN/FEN, sonidos y promoción.
+**Estado:** Fase 0 completada, verificada y **publicada**.
+**En vivo:** https://webajedrez-f11ajedrez.vercel.app · **Código:** https://github.com/issalys-cyber/webajedrez
 **Stack:** Next.js 16 + React 19 + TypeScript + Tailwind 4, tablero con `react-chessboard`, reglas con `chess.js` (ver `docs/ARQUITECTURA.md`).
 
 ## Arrancar
