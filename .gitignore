@@ -1,0 +1,43 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.*
+
+# next.js
+/.next/
+/apps/web/.next/
+out/
+/apps/web/out/
+
+# producción
+build/
+dist/
+
+# entorno — nunca commitear secretos
+.env
+.env.*
+!.env.example
+
+# vercel / cloudflare
+.vercel
+.wrangler
+
+# logs
+*.log
+npm-debug.log*
+
+# sistema
+.DS_Store
+Thumbs.db
+
+# editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# typescript
+*.tsbuildinfo
+
+# artefactos de las pruebas (se regeneran con `npm run smoke`)
+/shots/
+/test-results/

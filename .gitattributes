@@ -1,0 +1,14 @@
+# Normaliza los finales de línea: en el repo siempre LF.
+# Evita ruido de CRLF y sorpresas al desplegar en Vercel (Linux).
+* text=auto eol=lf
+
+# Binarios: no tocar.
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.wasm binary
+
+# Artefactos generados que no deben marcarse como texto.
+package-lock.json linguist-generated=true
