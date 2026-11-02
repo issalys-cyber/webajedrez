@@ -13,6 +13,12 @@ export type ConnectionStatus =
 const BACKOFF_MS = [250, 500, 1000, 2000, 4000, 8000, 10_000];
 const MAX_QUEUED = 32;
 const PING_INTERVAL_MS = 5_000;
+/**
+ * Si un socket ni abre ni falla (una red que se traga los paquetes, un
+ * intermediario que no contesta), el navegador puede dejarlo en "conectando"
+ * indefinidamente. Pasado este tiempo se cierra para forzar el reintento.
+ */
+const CONNECT_TIMEOUT_MS = 12_000;
 
 /**
  * Cliente del servidor de partidas.
@@ -31,6 +37,7 @@ export class RealtimeClient {
   private closedByUser = false;
   private pingTimer: ReturnType<typeof setInterval> | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private connectTimer: ReturnType<typeof setTimeout> | null = null;
   private offsetMs = 0;
 
   rttMs = 0;
@@ -67,7 +74,14 @@ export class RealtimeClient {
     }
     this.socket = socket;
 
+    // Vigila que el socket llegue a abrir; si no, se cierra para reintentar.
+    this.clearConnectTimer();
+    this.connectTimer = setTimeout(() => {
+      if (socket.readyState === WebSocket.CONNECTING) socket.close();
+    }, CONNECT_TIMEOUT_MS);
+
     socket.onopen = () => {
+      this.clearConnectTimer();
       this.attempt = 0;
       this.options.onStatus("open");
 
@@ -101,6 +115,7 @@ export class RealtimeClient {
     };
 
     socket.onclose = () => {
+      this.clearConnectTimer();
       this.stopPing();
       if (this.closedByUser) {
         this.options.onStatus("closed");
@@ -136,6 +151,11 @@ export class RealtimeClient {
     }, PING_INTERVAL_MS);
   }
 
+  private clearConnectTimer() {
+    if (this.connectTimer) clearTimeout(this.connectTimer);
+    this.connectTimer = null;
+  }
+
   private stopPing() {
     if (this.pingTimer) clearInterval(this.pingTimer);
     this.pingTimer = null;
@@ -158,6 +178,7 @@ export class RealtimeClient {
 
   close() {
     this.closedByUser = true;
+    this.clearConnectTimer();
     this.stopPing();
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
     this.reconnectTimer = null;

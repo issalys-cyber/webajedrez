@@ -82,9 +82,21 @@ function rawSocket(gameId, token) {
       socket.send(JSON.stringify(message));
     },
     async ready() {
+      // Con límite de tiempo: si el socket ni abre ni falla, la prueba debe
+      // fallar con un mensaje claro en vez de quedarse colgada.
       await new Promise((resolve, reject) => {
-        socket.once("open", resolve);
-        socket.once("error", reject);
+        const timer = setTimeout(
+          () => reject(new Error("el WebSocket no ha abierto en 15 s")),
+          15_000,
+        );
+        socket.once("open", () => {
+          clearTimeout(timer);
+          resolve();
+        });
+        socket.once("error", (error) => {
+          clearTimeout(timer);
+          reject(error);
+        });
       });
       return this.waitFor((message) => message.t === "ready");
     },
