@@ -4,6 +4,10 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
 
+  // El paquete compartido se publica como TypeScript fuente (sin build), así
+  // que Next tiene que transpilarlo como si fuera código propio.
+  transpilePackages: ["@webajedrez/shared"],
+
   async headers() {
     return [
       {

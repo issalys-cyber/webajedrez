@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { CreateGameButton } from "@/components/game/CreateGameButton";
+import { ONLINE_ENABLED } from "@/lib/realtime/config";
 
 const modes = [
   {
@@ -28,16 +30,32 @@ export default function Home() {
         <header className="space-y-4">
           <p className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1 text-xs text-muted">
             <span className="size-1.5 rounded-full bg-good" />
-            Fase 0 · tablero local
+            Tablero local · motor · online
           </p>
           <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
             Ajedrez, sin instalar nada.
           </h1>
           <p className="max-w-xl text-[15px] leading-relaxed text-muted">
             Juega en el navegador con reglas completas: enroque, captura al paso,
-            promoción, jaque mate y todas las tablas. Exporta la partida en PGN.
+            promoción, jaque mate y todas las tablas. Contra otra persona o
+            contra Stockfish, que se ejecuta en tu propio dispositivo.
           </p>
         </header>
+
+        {ONLINE_ENABLED && (
+          <section className="rounded-xl border border-line bg-surface p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-sm font-medium text-fg">Jugar online</h2>
+                <p className="mt-1 text-[13px] leading-snug text-muted">
+                  Crea una partida y comparte el enlace con tu rival. Reloj en el
+                  servidor y reconexión si se cae la red.
+                </p>
+              </div>
+              <CreateGameButton />
+            </div>
+          </section>
+        )}
 
         <ul className="grid gap-3 sm:grid-cols-3">
           {modes.map((mode) => {

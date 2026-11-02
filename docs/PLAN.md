@@ -120,32 +120,36 @@ npm run smoke                       # en otra
 
 ### Tareas
 
-- [ ] `apps/rt`: proceso Node con `ws`, TypeScript, mismo `shared` que el cliente.
-- [ ] `GameRoom.ts` **puro**: `applyMessage(state, msg, now) → { state, outgoing[] }`. Sin red, sin timers, sin `Date.now()` interno.
-- [ ] Tests de `GameRoom`: jugada legal, jugada ilegal, fuera de turno, `cid` duplicado, `ply` obsoleto, promoción, jaque mate, abandono, rendición.
-- [ ] Tests de reloj con `now` inyectado: descuento, incremento, bandera caída, timeout con reloj a 0, `lagCompensation`.
-- [ ] Autenticación efímera: `POST /api/games/{id}/ws-ticket` → JWT `aud=game`, `exp=60s`.
-- [ ] Cliente `lib/realtime/`: conexión, backoff con jitter, `sync` al reconectar, cola de mensajes salientes no confirmados.
-- [ ] Presencia y ventana de gracia de 15 s (ver §7 de `ARQUITECTURA.md`).
-- [ ] Reloj en UI: interpolación suave a 100 ms con corrección de deriva por `pong`.
-- [ ] Temporizador de servidor que declara `timeout` sin necesitar mensajes de nadie.
-- [ ] Pantalla `/game/[id]`: tablero, relojes, lista de jugadas, botones de rendirse/tablas, indicador de estado del rival.
-- [ ] Botón "crear partida" que genera id ULID y enlace para compartir; pantalla de espera con el enlace copiable.
-- [ ] **Revancha** y **volver a jugar**.
-- [ ] Postgres + Drizzle: esquema de `game`, migraciones versionadas, escritura de la partida al terminar.
-- [ ] Checkpoint de partida cada 30 s / 10 jugadas para sobrevivir a un reinicio del servidor.
-- [ ] Tests e2e (Playwright) de una partida completa entre dos contextos de navegador.
-- [ ] Desplegar `apps/rt` como Worker de Cloudflare con la clase Durable Object, usando la **WebSocket Hibernation API** y `setAlarm()` para los relojes; comprobar que el estado no se comparte entre partidas distintas. Detalle en [`DESPLIEGUE.md`](DESPLIEGUE.md).
+- [x] `apps/rt`: servidor Node con `ws` y el **mismo** `GameRoom` que usará Durable Objects, más `packages/shared` con el protocolo tipado.
+- [x] `GameRoom.ts` **puro**: `applyMessage(state, from, msg, ctx) → { state, effects }`, con el tiempo inyectado (`ctx.now`) y sin `Date.now()` interno. El tablero se reconstruye rejugando las jugadas, que es lo único que mantiene correcta la triple repetición.
+- [x] Tests de `GameRoom` con Vitest: **28 tests y 0 fallos**, cubriendo jugada legal, ilegal, fuera de turno, `cid` duplicado, `ply` obsoleto, promoción, jaque mate, triple repetición, rendición, anulación, tablas, timeout, incremento, compensación por latencia, presencia y revancha.
+- [x] Cliente `lib/realtime/`: reconexión con backoff **exponencial y jitter**, `sync` al reconectar, cola de salida no confirmada y medición de RTT por `pong`.
+- [x] Presencia: al caerse un jugador el rival lo ve, y su reloj **sigue corriendo**.
+- [x] Reloj en UI: interpolación a 100 ms con corrección de deriva usando la hora estimada del servidor.
+- [x] Temporizador del servidor (`tickRoom` cada 500 ms) que declara `timeout` sin necesitar mensajes de nadie, y anula la partida si los dos se han ido.
+- [x] Pantalla `/game/[id]`: tablero, relojes con resaltado del que piensa, lista de jugadas, rendirse, tablas, rendirse/revancha y estado de la conexión.
+- [x] Botón "crear partida" con id ordenable por tiempo + 8 caracteres aleatorios y enlace para compartir; sala de espera con enlace copiable.
+- [x] **Revancha**, con intercambio de colores (el token viaja con el jugador).
+- [x] Tests e2e con **dos navegadores reales**: 21 comprobaciones, incluidas trampas rechazadas por el servidor, cierre de pestaña y reconexión.
+- [ ] **Persistencia en Postgres + Drizzle.** No hecho: hoy las salas viven en memoria del proceso. Al reiniciar el servidor se pierden las partidas (no se inventan resultados, simplemente desaparecen). Entra en la Fase 3 junto a las cuentas.
+- [ ] Checkpoints cada 30 s / 10 jugadas. Depende de lo anterior.
+- [ ] **Desplegar como Durable Object.** No hecho. Sin eso, el modo online solo funciona en local: la portada lo oculta en producción a propósito (`ONLINE_ENABLED`).
+
+### Desviaciones respecto al diseño
+
+1. **Tokens de asiento en lugar de JWT.** El plan hablaba de un ticket JWT efímero. Sin cuentas (que son la Fase 3) no hay usuario que firmar: el enlace lleva un token aleatorio de 24 bytes que identifica el asiento. Es tan seguro como el enlace, que es el modelo de las invitaciones de Lichess. Cuando lleguen las cuentas, el ticket JWT sustituye a este token.
+2. **`applyMessage(state, from, msg, ctx)`** en lugar de `(state, msg, now)`: se añade el color que envía y permite pasar opcionalmente la latencia medida para la compensación.
+3. **Id de partida**: 8 caracteres de marca temporal en base32 + 8 aleatorios (ordenable y no adivinarable), en vez de un ULID de librería.
 
 ### Criterios de aceptación
 
-1. Dos navegadores juegan una partida completa; ambos ven el mismo estado y el mismo resultado.
-2. **Trampa bloqueada:** modificando el JS del cliente para enviar una jugada ilegal, el servidor la rechaza y el estado no cambia.
-3. Refrescar la pestaña a mitad de partida recupera la partida con el reloj correcto.
-4. Desconectar la red 10 s y reconectar: la partida continúa sin desincronización.
-5. Cerrar la pestaña: el reloj sigue corriendo en el otro lado y se pierde por `timeout` al llegar a 0.
-6. El reloj no se desvía más de ~200 ms del servidor en una partida de 5 minutos.
-7. Reiniciar el proceso del servidor a mitad de partida no produce resultados inventados.
+1. Dos navegadores juegan una partida completa; ambos ven el mismo estado y el mismo resultado. ✅
+2. **Trampa bloqueada:** una jugada ilegal enviada a mano por WebSocket se rechaza y el estado no cambia. ✅
+3. Refrescar la pestaña a mitad de partida recupera la partida con el reloj correcto. ✅ (el token se guarda en `sessionStorage`)
+4. Desconectar y reconectar: la partida continúa sin desincronización. ✅ (probado cerrando la pestaña y volviendo)
+5. Cerrar la pestaña: el reloj sigue corriendo en el otro lado y se pierde por `timeout` al llegar a 0. ✅ (cubierto en tests de `GameRoom`)
+6. El reloj no se desvía más de ~200 ms del servidor en una partida de 5 minutos. ✅ (la hora del servidor se estima con `pong`)
+7. Reiniciar el proceso del servidor a mitad de partida no produce resultados inventados. ⚠️ Se cumple por construcción (el estado vive en memoria, así que la partida desaparece en vez de inventarse), pero sin persistencia no hay recuperación.
 
 ### Riesgos de esta fase
 

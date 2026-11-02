@@ -37,7 +37,7 @@ export function BotGame() {
   const botColor: "w" | "b" = playerColor === "w" ? "b" : "w";
   const config = getLevel(level);
 
-  useMoveSounds(snap.history, snap.inCheck, snap.status.over);
+  useMoveSounds(snap.history, snap.status.over);
 
   useEffect(() => {
     setMutedState(isMuted());

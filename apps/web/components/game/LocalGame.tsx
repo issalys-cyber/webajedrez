@@ -46,7 +46,7 @@ export function LocalGame() {
 
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useMoveSounds(snap.history, snap.inCheck, snap.status.over);
+  useMoveSounds(snap.history, snap.status.over);
 
   // El estado de silencio vive en localStorage: se lee tras montar para no
   // romper la hidratación del servidor.

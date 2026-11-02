@@ -152,6 +152,11 @@ Tres candidatos evaluados:
   1. **Desarrollo local:** proceso Node (`ws`). Depurable, sin emuladores, sin lock-in.
   2. **Producción (gratis):** **Cloudflare Workers + Durable Objects en el plan Free** (solo backend SQLite, que es el que conviene) con la **WebSocket Hibernation API**. Verificado: 100 000 peticiones/día y 13 000 GB-s/día, suficiente para decenas de miles de jugadas diarias, y **al pasarse el límite las operaciones fallan en lugar de facturar**. Descartados Fly.io y Railway: ya no tienen plan gratuito permanente. Detalle en [`DESPLIEGUE.md`](DESPLIEGUE.md).
 - **Consecuencias:** el `GameRoom` debe ser **determinista y testeable en unit tests sin red**. Ese es el requisito de diseño que hace viable la migración.
+- **Estado de la implementación (Fase 2):**
+  - `apps/rt/src/GameRoom.ts` es puro: `applyMessage(state, from, msg, ctx)` y `tickRoom(state, ctx)`, con `ctx.now` siempre inyectado y **28 tests con tiempo simulado**. El estado es serializable; el tablero se reconstruye rejugando las jugadas, que es lo único que mantiene correcta la triple repetición.
+  - `apps/rt/src/server.ts` es solo transporte: sockets, salas en memoria, difusión y latencia. Cambiar de Node a Durable Objects es escribir otro adaptador, no otra lógica.
+  - **Pendiente:** el adaptador de Durable Objects. Hasta entonces el modo online vive en un proceso Node local y en producción está oculto a propósito (`ONLINE_ENABLED` en `lib/realtime/config.ts`).
+  - **Desviación consciente:** en lugar del ticket JWT efímero del MVP, el asiento se identifica con un **token aleatorio de 24 bytes que viaja en el fragmento de la URL** (`#t=…`, que no se envía al servidor ni acaba en registros). Sin cuentas de usuario no hay nada que firmar; cuando llegue la Fase 3, el JWT sustituye al token.
 - **Descartado para el MVP:** bases de datos de tiempo real sin autoridad. Un ajedrez donde el cliente manda es un ajedrez trampeable.
 
 ### ADR-006 — Persistencia: Postgres + Drizzle ORM

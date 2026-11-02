@@ -1,0 +1,21 @@
+{
+  "name": "@webajedrez/rt",
+  "version": "0.1.0",
+  "private": true,
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/server.ts",
+    "start": "node src/server.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@webajedrez/shared": "*",
+    "chess.js": "^1.4.0",
+    "ws": "^8.22.1"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.18.2",
+    "tsx": "^4.23.15"
+  }
+}

@@ -12,19 +12,23 @@
   ],
   "scripts": {
     "dev": "npm run dev -w @webajedrez/web",
+    "dev:rt": "npm run dev -w @webajedrez/rt",
     "build": "npm run build -w @webajedrez/web",
     "start": "npm run start -w @webajedrez/web",
-    "typecheck": "npm run typecheck -w @webajedrez/web",
+    "typecheck": "npm run typecheck -w @webajedrez/web && tsc --noEmit -p apps/rt/tsconfig.json",
     "verify": "npm run typecheck && npm run build",
+    "test:rt": "npm test -w @webajedrez/rt",
     "smoke": "node scripts/smoke.mjs",
     "smoke:bot": "node scripts/smoke-bot.mjs",
+    "smoke:online": "node scripts/smoke-online.mjs",
     "check:uci": "node scripts/uci-moves-check.mjs",
     "check:engine": "node scripts/engine-check.mjs",
     "check:hint": "node scripts/hint-check.mjs",
-    "test:node": "npm run check:uci && npm run check:engine",
-    "test:browser": "npm run smoke && npm run smoke:bot && npm run check:hint"
+    "test:node": "npm run test:rt && npm run check:uci && npm run check:engine",
+    "test:browser": "npm run smoke && npm run smoke:bot && npm run check:hint && npm run smoke:online"
   },
   "devDependencies": {
-    "playwright": "^1.64.1"
+    "playwright": "^1.64.1",
+    "vitest": "^5.0.5"
   }
 }

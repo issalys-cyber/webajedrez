@@ -1,11 +1,13 @@
 "use client";
 
-import type { Move } from "chess.js";
 import { useEffect, useRef } from "react";
 
 /**
  * Lista de jugadas en notación algebraica, con navegación.
  * Cada celda es un botón: al pulsarla se muestra la posición de esa jugada.
+ *
+ * Solo necesita el SAN, así que sirve tanto para las jugadas de chess.js
+ * (partida local y motor) como para las que llegan del servidor (online).
  */
 export function MoveList({
   history,
@@ -13,7 +15,7 @@ export function MoveList({
   onSelect,
   onGoToLive,
 }: {
-  history: Move[];
+  history: ReadonlyArray<{ san: string }>;
   viewingIndex: number | null;
   onSelect: (index: number) => void;
   onGoToLive: () => void;
