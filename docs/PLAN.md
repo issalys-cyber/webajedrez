@@ -130,10 +130,10 @@ npm run smoke                       # en otra
 - [x] Pantalla `/game/[id]`: tablero, relojes con resaltado del que piensa, lista de jugadas, rendirse, tablas, rendirse/revancha y estado de la conexión.
 - [x] Botón "crear partida" con id ordenable por tiempo + 8 caracteres aleatorios y enlace para compartir; sala de espera con enlace copiable.
 - [x] **Revancha**, con intercambio de colores (el token viaja con el jugador).
-- [x] Tests e2e con **dos navegadores reales**: 21 comprobaciones, incluidas trampas rechazadas por el servidor, cierre de pestaña y reconexión.
-- [ ] **Persistencia en Postgres + Drizzle.** No hecho: hoy las salas viven en memoria del proceso. Al reiniciar el servidor se pierden las partidas (no se inventan resultados, simplemente desaparecen). Entra en la Fase 3 junto a las cuentas.
-- [ ] Checkpoints cada 30 s / 10 jugadas. Depende de lo anterior.
-- [ ] **Desplegar como Durable Object.** No hecho. Sin eso, el modo online solo funciona en local: la portada lo oculta en producción a propósito (`ONLINE_ENABLED`).
+- [x] Tests e2e con **dos navegadores reales**: 25 comprobaciones, incluidas trampas rechazadas por el servidor, cierre de pestaña, reconexión y la caída de bandera declarada por alarma.
+- [ ] **Persistencia en Postgres + Drizzle.** No hecho: el estado vive en el Durable Object de cada partida (que sobrevive a reinicios del proceso, pero no es consultable ni alimenta el historial). Entra en la Fase 3 junto a las cuentas.
+- [ ] Checkpoints cada 30 s / 10 jugadas. Innecesario de momento: el Durable Object guarda el estado en cada cambio.
+- [x] **Desplegado como Durable Object** en Cloudflare Workers (plan gratuito): <https://webajedrez-rt.issalys.workers.dev>. Un objeto por partida, WebSocket Hibernation API y `setAlarm()` para los relojes. Verificado contra producción: 25/25, con la bandera caída a los 10,0 s sin que ningún cliente enviara nada.
 
 ### Desviaciones respecto al diseño
 

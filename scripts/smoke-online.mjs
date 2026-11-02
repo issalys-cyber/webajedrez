@@ -269,6 +269,40 @@ async function main() {
 
     await white.screenshot({ path: shot("online-desktop.png"), fullPage: true });
 
+    // ---------- Timeout sin que nadie envíe mensajes ----------
+    // Es la prueba de la alarma: en Durable Objects el servidor tiene que
+    // despertarse solo para declarar la caída de bandera. Partida de 10 s
+    // (el mínimo que admite la API) y ningún mensaje durante la espera.
+    console.log("\n  (partida de 10 s: se espera la caída de bandera)");
+    const shortGame = await fetch(`${RT}/games`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ initialMs: 10_000, incrementMs: 0 }),
+    }).then((response) => response.json());
+
+    const shortWhite = rawSocket(shortGame.gameId, shortGame.whiteToken);
+    const shortBlack = rawSocket(shortGame.gameId, shortGame.blackToken);
+    await shortWhite.ready();
+    await shortBlack.ready();
+
+    const began = Date.now();
+    const end = await shortBlack.waitFor((message) => message.t === "end", 25_000);
+    const elapsed = Date.now() - began;
+
+    check(
+      "el servidor declara la caída de bandera sin que nadie envíe nada",
+      end.termination === "timeout",
+      end.termination,
+    );
+    check("gana el rival de quien no movió", end.result === "0-1", end.result);
+    check(
+      "lo declara en el plazo esperado",
+      elapsed >= 9_000 && elapsed <= 20_000,
+      `${(elapsed / 1000).toFixed(1)} s`,
+    );
+    shortWhite.close();
+    shortBlack.close();
+
     // ---------- Móvil ----------
     const mobile = await browser.newContext({
       viewport: { width: 390, height: 844 },

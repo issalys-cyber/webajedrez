@@ -5,6 +5,7 @@ import {
   createRoom,
   joinRoom,
   leaveRoom,
+  nextDeadline,
   publicState,
   tickRoom,
 } from "../src/GameRoom.ts";
@@ -484,5 +485,35 @@ describe("publicación del estado", () => {
     const result = applyMessage(room, "w", { t: "sync" }, { now: T0 + 5_000 });
     expect(result.state).toEqual(room);
     expect(result.effects).toEqual([{ kind: "broadcast" }]);
+  });
+});
+
+describe("cuándo hay que despertar al servidor", () => {
+  it("programa el aviso para el instante de la caída de bandera", () => {
+    // Reloj de 60 s que empieza a correr en T0 con las blancas: la bandera cae
+    // en T0 + 60_000.
+    expect(nextDeadline(startedRoom())).toBe(T0 + 60_000);
+  });
+
+  it("tras una jugada, el aviso se mueve al turno del rival", () => {
+    const afterMove = play(startedRoom(), "w", "e2e4", T0 + 2_000).state;
+    // Las blancas gastaron 2 s y ganaron 1 s de incremento: 59 s restantes,
+    // pero ahora le toca a las negras, cuyo reloj arrancó en T0 + 2_000.
+    expect(nextDeadline(afterMove)).toBe(T0 + 2_000 + 60_000);
+  });
+
+  it("no programa nada si la partida ha terminado", () => {
+    const finished = applyMessage(startedRoom(), "w", { t: "resign", cid: "r" }, { now: T0 }).state;
+    expect(nextDeadline(finished)).toBeNull();
+  });
+
+  it("programa el abandono si los dos se han ido antes que la bandera", () => {
+    let room = startedRoom();
+    room = leaveRoom(room, "w", { now: T0 + 1_000 }).state;
+    room = leaveRoom(room, "b", { now: T0 + 1_500 }).state;
+
+    const flagAt = T0 + 60_000;
+    const abortAt = T0 + 1_500 + BOTH_DISCONNECTED_ABORT_MS;
+    expect(nextDeadline(room)).toBe(Math.min(flagAt, abortAt));
   });
 });

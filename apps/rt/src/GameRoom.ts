@@ -615,6 +615,35 @@ export function tickRoom(
 }
 
 // ---------------------------------------------------------------------------
+// Cuándo hay que despertar al servidor
+// ---------------------------------------------------------------------------
+
+/**
+ * Instante en el que hay que volver a mirar el estado, o null si no hace falta
+ * despertar a nadie.
+ *
+ * Lo usan los adaptadores que no pueden permitirse un temporizador perpetuo:
+ * en Durable Objects cada despertar cuesta una petición, así que se programa
+ * una alarma exactamente para la caída de bandera (o para el abandono), en
+ * lugar de comprobar el reloj cada medio segundo.
+ */
+export function nextDeadline(state: RoomState): number | null {
+  let deadline: number | null = null;
+
+  if (state.status === "playing" && state.turnStartedAt !== null) {
+    const turn = replay(state).turn();
+    deadline = state.turnStartedAt + state.seats[turn].msLeft;
+  }
+
+  if (state.bothDisconnectedAt !== null) {
+    const abortAt = state.bothDisconnectedAt + BOTH_DISCONNECTED_ABORT_MS;
+    deadline = deadline === null ? abortAt : Math.min(deadline, abortAt);
+  }
+
+  return deadline;
+}
+
+// ---------------------------------------------------------------------------
 // Publicación del estado
 // ---------------------------------------------------------------------------
 

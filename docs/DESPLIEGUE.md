@@ -28,6 +28,40 @@ Tres cosas que hubo que ajustar al desplegar de verdad, para que no vuelvan a mo
 
 ---
 
+## 0.b Estado del servidor de partidas (Fase 2, ya desplegado)
+
+| | |
+|---|---|
+| **Servidor de partidas** | **https://webajedrez-rt.issalys.workers.dev** |
+| Plataforma | Cloudflare Workers + **Durable Objects** (plan Free), un objeto por partida |
+| Tamaño | 110 KiB (24 KiB gzip) |
+| Coste | **0 €** |
+| Verificación | 25 comprobaciones end-to-end contra la web pública y el Worker real, incluida la caída de bandera declarada por alarma a los 10,0 s |
+
+Cómo se despliega y qué hay que saber:
+
+```powershell
+cd apps\rt
+npx wrangler login          # una vez, abre el navegador
+npx wrangler deploy         # cada vez que cambie el servidor de partidas
+```
+
+- **Plan gratuito obliga a `new_sqlite_classes`.** El backend de almacenamiento de clave-valor exige plan de pago; el de SQLite no. Es el que usamos (el estado es un único objeto JSON por partida).
+- **Un Durable Object por partida.** El estado de una partida no compite con el de otra y no hay bloqueos cruzados.
+- **WebSocket Hibernation API.** Mientras la partida está quieta, el objeto se duerme y no consume cómputo. El token del asiento viaja en `serializeAttachment`, así que se recupera al despertar.
+- **`setAlarm()` en vez de `setInterval`.** Se programa un único despertar exactamente para la caída de bandera (o el abandono). En el plan gratuito cada despertar es una petición: un bucle cada 500 ms habría multiplicado el consumo por mil. La alarma se borra cuando no hay nada que esperar.
+- **Variables de entorno en Vercel** (necesarias para que la web sepa dónde conectar; si faltan, el modo online se oculta a propósito):
+
+  ```powershell
+  "https://webajedrez-rt.issalys.workers.dev" | npx vercel env add NEXT_PUBLIC_RT_HTTP_URL production
+  "wss://webajedrez-rt.issalys.workers.dev"   | npx vercel env add NEXT_PUBLIC_RT_WS_URL production
+  ```
+
+  Al ser `NEXT_PUBLIC_*` se incrustan en el build: **después de añadirlas hay que redesplegar**.
+- **El servidor Node sigue existiendo** en `apps/rt/src/server.ts` para desarrollo sin wrangler (`npm run dev:rt`). Los dos comparten `GameRoom.ts` y `delivery.ts`, y la misma suite de pruebas pasa contra ambos.
+
+---
+
 ## 1. Respuesta corta
 
 Hay **dos cosas distintas** que "publicar":

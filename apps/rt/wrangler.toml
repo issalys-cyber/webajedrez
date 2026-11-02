@@ -1,0 +1,20 @@
+# Servidor de partidas en Cloudflare Workers + Durable Objects.
+#
+# Un Durable Object por partida, con la API de hibernación de WebSocket y
+# alarmas para los relojes. En el plan gratuito hay que usar el backend de
+# almacenamiento SQLite (`new_sqlite_classes`); el de clave-valor exige plan de
+# pago. Es justo el que queremos: el estado es un único objeto JSON por partida.
+
+name = "webajedrez-rt"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+
+# El objeto no hace peticiones salientes; nada que declarar en observability.
+
+[[durable_objects.bindings]]
+name = "GAME_ROOM"
+class_name = "GameRoomDurableObject"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["GameRoomDurableObject"]

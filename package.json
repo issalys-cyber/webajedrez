@@ -13,9 +13,11 @@
   "scripts": {
     "dev": "npm run dev -w @webajedrez/web",
     "dev:rt": "npm run dev -w @webajedrez/rt",
+    "dev:rt:do": "npx wrangler dev --port 8787 --config apps/rt/wrangler.toml",
+    "deploy:rt": "npx wrangler deploy --config apps/rt/wrangler.toml",
     "build": "npm run build -w @webajedrez/web",
     "start": "npm run start -w @webajedrez/web",
-    "typecheck": "npm run typecheck -w @webajedrez/web && tsc --noEmit -p apps/rt/tsconfig.json",
+    "typecheck": "npm run typecheck -w @webajedrez/web && tsc --noEmit -p apps/rt/tsconfig.json && tsc --noEmit -p apps/rt/tsconfig.worker.json",
     "verify": "npm run typecheck && npm run build",
     "test:rt": "npm test -w @webajedrez/rt",
     "smoke": "node scripts/smoke.mjs",
