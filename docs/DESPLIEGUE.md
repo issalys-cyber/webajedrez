@@ -20,6 +20,11 @@ Tres cosas que hubo que ajustar al desplegar de verdad, para que no vuelvan a mo
 1. **Root Directory = `apps/web`.** Es un monorepo: si se deja en la raíz, Vercel busca el `.next` en el sitio equivocado y el build falla con `routes-manifest.json couldn't be found`. Se fija con `vercel project update <proyecto> --root-directory apps/web --yes` (sin `--yes` pide confirmación y **no** aplica el cambio).
 2. **Protección de despliegues desactivada.** El proyecto nace con *Vercel Authentication* (`ssoProtection: all_except_custom_domains`), que hace que **todas** las URLs `*.vercel.app` redirijan a un login de Vercel — incluida producción. Se consulta con `vercel project protection <proyecto>` y se quita con `vercel project protection disable <proyecto> --sso`.
 3. **Despliegue automático: conectado.** `vercel git connect` falló al principio con *"Failed to connect issalys-cyber/webajedrez"* porque faltaba instalar la **app de Vercel en la cuenta de GitHub** (<https://github.com/apps/vercel/installations/new>). Instalada la app, la conexión quedó establecida y **cada `git push` a `main` despliega a producción solo**. Si alguna vez hay que forzar un despliegue: `npx vercel deploy --prod --yes` desde la raíz del repo.
+4. **Instalación desde la raíz del monorepo.** Con `Root Directory = apps/web`, Vercel instalaba **solo** las dependencias de `apps/web` (11 paquetes) y no enlazaba `packages/shared`, así que el build moría con `TS2307: Cannot find module '@webajedrez/shared'` — y el despliegue quedaba en **Error** mientras producción seguía sirviendo la versión anterior. Dos arreglos, aplicados a la vez:
+   - El comando de instalación del proyecto pasa a ejecutarse en la raíz: `vercel project update <proyecto> --install-command "cd ../.. && npm install" --yes`.
+   - `packages/shared` se declara en `apps/web/package.json` como `"file:../../packages/shared"`, para que npm lo instale aunque el contexto sea el de la app.
+
+   **Cómo detectarlo rápido:** un push que no cambia nada en la web suele significar build roto. `vercel ls <proyecto>` muestra el estado (`● Error`) y `vercel inspect <url> --logs` da el error real; la página de producción sigue siendo la anterior, así que **nunca des por bueno un despliegue sin comprobar `● Ready`**.
 
 ---
 
