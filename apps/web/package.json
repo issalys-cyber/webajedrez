@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@webajedrez/shared": "file:../../packages/shared",
     "chess.js": "1.4.0",
     "next": "16.4.3",
     "react": "19.3.1",
