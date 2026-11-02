@@ -127,10 +127,14 @@ Es la decisión con más consecuencias legales del proyecto.
   - Latencia mínima y análisis "instantáneo" al mover.
   - Escala infinitamente sin tocar infraestructura.
 - **Niveles de dificultad:** no se simula "torpeza" con esperas aleatorias. Se usan parámetros reales:
-  - `Skill Level` (0-20) + `MultiPV` alto para el nivel bajo, `depth` bajo, y opcionalmente limitar fuerza con `UCI_LimitStrength` / `UCI_Elo`.
-  - Tabla de niveles propuesta: 1 → Skill 0 / depth 1; 4 → Skill 3 / depth 5; 8 → Skill 8 / depth 10; 12 → Skill 13 / depth 13; 16 → Skill 17 / depth 16; 20 → Skill 20 / depth 20.
-- **Gestión del worker:** un único worker reutilizado (crear/destruir workers es caro). Cancelar búsquedas con `stop` antes de lanzar la siguiente. Protocolo UCI sobre `postMessage`.
-- **Consecuencias legales:** **resueltas, no pendientes.** El proyecto completo se publica bajo **AGPL-3.0** con repo público (ver [`LICENCIAS.md`](LICENCIAS.md)), así que servir el WASM del motor no plantea ninguna cuestión de compatibilidad: basta mantener la atribución y el enlace a la fuente en `/creditos`.
+  - `Skill Level` (0-20) decide entre las jugadas razonables: es lo que de verdad baja la calidad.
+  - `depth` limita cuánto calcula. En los niveles 1-4 se queda en 1-2, y ahí el motor falla material de forma reconocible.
+  - `minThinkMs` no cambia la fuerza, solo el ritmo (350 ms en el nivel 1, 1,6 s en el 20). Sin esto el nivel 1 responde en 30 ms y se siente antinatural.
+  - Tabla implementada en `lib/engine/levels.ts`: 20 entradas agrupadas en principiante / intermedio / avanzado / máquina. **No se usa** `UCI_LimitStrength`/`UCI_Elo`: `Skill Level` + `depth` dan un reparto más parecido a la curva humana y menos dependiente de la velocidad del dispositivo.
+- **Build elegido (verificado):** `stockfish-19-lite-single.js` + `.wasm` = **1,8 MB en total**, frente a los 94 MB del build completo. El propio README del paquete recomienda este build ("still far stronger than any human will ever be"). Con `single-threaded` no hacen falta las cabeceras `COOP`/`COEP`, así que funciona en cualquier hosting estático sin configuración.
+- **Gestión del worker:** un único worker reutilizado (crear/destruir workers es caro) y **búsquedas serializadas en una cola**. Esto último no es un detalle: el motor solo puede pensar una posición a la vez, y `stop` genera un `bestmove` que llega tarde. Con dos búsquedas solapadas (la evaluación de fondo y una pista), la respuesta de una puede resolver la promesa de la otra y devolver una jugada que no corresponde a la posición actual. Además, `stop()` solo se envía si hay una búsqueda viva, porque un `stop` en reposo produce un `bestmove` huérfano.
+- **Parseo aislado:** el protocolo se interpreta en funciones puras (`lib/engine/uci.ts`) fuera del hook, para poder probar el formato de las líneas sin navegador.
+- **Consecuencias legales:** **resueltas, no pendientes.** El proyecto completo se publica bajo **AGPL-3.0** con repo público (ver [`LICENCIAS.md`](LICENCIAS.md)), así que servir el WASM del motor no plantea ninguna cuestión de compatibilidad: basta mantener la atribución y el enlace a la fuente en `/creditos`, junto con el texto de la licencia servido en `/engine/LICENSE-stockfish.txt`.
 - **Nota sobre motores permisivos:** no existe alternativa real. Todos los motores fuertes actuales (Stockfish, Ethereal, Berserk, Seer, Lc0) son GPL-3, y los permisivos son o muy débiles (~1800 Elo, sin red neuronal) o de licencia dudosa. No merece la pena perseguirlo: con el proyecto en AGPL-3 la pregunta desaparece.
 - **Obligación concreta y única:** atribución a Stockfish + enlace a su código fuente en la página de créditos. Ya está redactada en `LICENCIAS.md` §8.
 

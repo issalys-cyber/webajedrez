@@ -9,6 +9,18 @@ type Credit = { name: string; role: string; license: string; url: string };
 
 const credits: Credit[] = [
   {
+    name: "Stockfish",
+    role: "Motor de ajedrez (se ejecuta en tu navegador, vía stockfish.js)",
+    license: "GPL-3.0",
+    url: "https://github.com/official-stockfish/Stockfish",
+  },
+  {
+    name: "stockfish.js",
+    role: "Compilación WASM del motor",
+    license: "GPL-3.0",
+    url: "https://github.com/nmrugg/stockfish.js",
+  },
+  {
     name: "chess.js",
     role: "Reglas del ajedrez, notación y PGN",
     license: "BSD-2-Clause",
@@ -93,6 +105,31 @@ export default function CreditosPage() {
           </li>
         ))}
       </ul>
+
+      <p className="mt-4 rounded-lg border border-line bg-surface px-4 py-3 text-xs leading-relaxed text-muted">
+        <strong className="text-fg">Stockfish</strong> se ejecuta dentro de tu
+        navegador y se distribuye bajo GPL-3.0. Su código fuente completo está
+        en{" "}
+        <a
+          href="https://github.com/official-stockfish/Stockfish"
+          className="text-accent underline underline-offset-4"
+          target="_blank"
+          rel="noreferrer noopener"
+        >
+          github.com/official-stockfish/Stockfish
+        </a>{" "}
+        y el texto de la licencia que acompaña al binario que sirve este sitio
+        está en{" "}
+        <a
+          href="/engine/LICENSE-stockfish.txt"
+          className="text-accent underline underline-offset-4"
+          target="_blank"
+          rel="noreferrer noopener"
+        >
+          /engine/LICENSE-stockfish.txt
+        </a>
+        .
+      </p>
 
       <p className="mt-8 text-xs leading-relaxed text-muted">
         Este sitio no usa cookies de seguimiento, ni publicidad, ni servicios de

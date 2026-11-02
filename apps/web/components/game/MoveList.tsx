@@ -70,6 +70,7 @@ export function MoveList({
         type="button"
         onClick={() => onSelect(entry.index)}
         aria-current={active ? "true" : undefined}
+        data-move-index={entry.index}
         className={`rounded px-2 py-1 text-left font-mono text-[13px] transition-colors ${
           active
             ? "bg-accent/20 text-fg ring-1 ring-accent/60 ring-inset"

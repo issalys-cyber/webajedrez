@@ -2,7 +2,7 @@
 
 Web para jugar al ajedrez. Jugador local, contra el motor y partidas online 1v1.
 
-**Estado:** Fase 0 completada, verificada y **publicada**.
+**Estado:** Fase 0 y Fase 1 completadas, verificadas y publicadas.
 **En vivo:** https://webajedrez-f11ajedrez.vercel.app · **Código:** https://github.com/issalys-cyber/webajedrez
 **Stack:** Next.js 16 + React 19 + TypeScript + Tailwind 4, tablero con `react-chessboard`, reglas con `chess.js` (ver `docs/ARQUITECTURA.md`).
 
@@ -18,26 +18,31 @@ npm run dev          # http://localhost:3000
 Otros comandos:
 
 ```bash
-npm run typecheck    # TypeScript en modo estricto
-npm run build        # build de producción
-npm run start        # servir el build
-npm run smoke        # 24 comprobaciones en un navegador real (requiere el servidor arrancado)
+npm run typecheck     # TypeScript en modo estricto
+npm run build         # build de producción
+npm run start         # servir el build
+npm run test:node     # 12 comprobaciones sin navegador (conversión UCI + motor)
+npm run test:browser  # 42 comprobaciones en Chromium real (requiere el servidor arrancado)
 ```
 
-`npm run smoke` necesita Chromium de Playwright: `npx playwright install chromium`.
+Las pruebas de navegador necesitan Chromium de Playwright: `npx playwright install chromium`.
 
 ## Qué hay dentro
 
 ```
-apps/web/app/            rutas: /, /play/local, /creditos
+apps/web/app/              rutas: /, /play/local, /play/bot, /creditos
 apps/web/components/
-  board/ChessBoard.tsx   ÚNICO fichero que conoce la librería del tablero
-  game/                  LocalGame, MoveList, PromotionDialog
+  board/ChessBoard.tsx     ÚNICO fichero que conoce la librería del tablero
+  engine/EvalBar.tsx       barra de evaluación
+  game/                    LocalGame, BotGame, MoveList, PromotionDialog
   ui/Button.tsx
-apps/web/hooks/          useChessGame: estado y reglas (sin acoplar a la UI)
-apps/web/lib/sound.ts    sonidos sintetizados con Web Audio (sin ficheros)
-scripts/smoke.mjs        prueba end-to-end con navegador real
-docs/                    arquitectura, plan, licencias y despliegue
+apps/web/hooks/            useChessGame (reglas), useEngine (motor), useMoveSounds
+apps/web/lib/engine/       cliente UCI, parseo del protocolo y los 20 niveles
+apps/web/lib/chess/        conversión UCI → jugada (probada sin navegador)
+apps/web/lib/sound.ts      sonidos sintetizados con Web Audio (sin ficheros)
+apps/web/public/engine/    Stockfish 19 lite single-threaded (1,8 MB) + su licencia
+scripts/                   pruebas end-to-end y de motor
+docs/                      arquitectura, plan, licencias y despliegue
 ```
 
 ## Documentos

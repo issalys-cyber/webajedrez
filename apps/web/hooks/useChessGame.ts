@@ -3,6 +3,7 @@
 import { Chess, validateFen } from "chess.js";
 import type { Color, Move, PieceSymbol, Square } from "chess.js";
 import { useCallback, useMemo, useRef, useState } from "react";
+import { applyUciMove } from "@/lib/chess/moves";
 
 /** Resultado de la partida, derivado del estado de chess.js. */
 export type GameStatus = {
@@ -226,6 +227,26 @@ export function useChessGame() {
     [tryMove],
   );
 
+  /**
+   * Aplica una jugada en notación UCI (por ejemplo "e2e4" o "e7e8q").
+   * La usa el motor: no pasa por el diálogo de promoción, porque el motor ya
+   * indica qué pieza elige.
+   */
+  const playUci = useCallback(
+    (uci: string): boolean => {
+      const game = gameRef.current;
+      if (game.isGameOver()) return false;
+      if (!applyUciMove(game, uci)) return false;
+
+      setSelected(null);
+      setPendingPromotion(null);
+      setViewIndex(null);
+      sync();
+      return true;
+    },
+    [sync],
+  );
+
   const choosePromotion = useCallback(
     (piece: PromotionPiece) => {
       if (!pendingPromotion) return;
@@ -334,6 +355,7 @@ export function useChessGame() {
     promotionPieces: PROMOTION_PIECES,
     clickSquare,
     dropPiece,
+    playUci,
     choosePromotion,
     cancelPromotion,
     reset,

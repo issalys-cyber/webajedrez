@@ -2,27 +2,13 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Move } from "chess.js";
 import { ChessBoard } from "@/components/board/ChessBoard";
 import { MoveList } from "@/components/game/MoveList";
 import { PromotionDialog } from "@/components/game/PromotionDialog";
 import { Button } from "@/components/ui/Button";
 import { useChessGame } from "@/hooks/useChessGame";
-import { isMuted, playSound, setMuted, type SoundName } from "@/lib/sound";
-
-function pickSound(
-  move: Move | undefined,
-  inCheck: boolean,
-  over: boolean,
-): SoundName {
-  if (over) return "end";
-  if (inCheck) return "check";
-  if (!move) return "move";
-  if (move.promotion) return "promote";
-  if (move.isCapture()) return "capture";
-  if (move.isKingsideCastle() || move.isQueensideCastle()) return "castle";
-  return "move";
-}
+import { useMoveSounds } from "@/hooks/useMoveSounds";
+import { isMuted, playSound, setMuted } from "@/lib/sound";
 
 async function copyToClipboard(text: string): Promise<boolean> {
   try {
@@ -58,24 +44,15 @@ export function LocalGame() {
   const [importText, setImportText] = useState("");
   const [importError, setImportError] = useState<string | null>(null);
 
-  const lastMoveCount = useRef(0);
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useMoveSounds(snap.history, snap.inCheck, snap.status.over);
 
   // El estado de silencio vive en localStorage: se lee tras montar para no
   // romper la hidratación del servidor.
   useEffect(() => {
     setMutedState(isMuted());
   }, []);
-
-  // Sonido en cada jugada nueva y al terminar la partida.
-  useEffect(() => {
-    const count = snap.history.length;
-    if (count > lastMoveCount.current) {
-      const last = snap.history[count - 1];
-      playSound(pickSound(last, snap.inCheck, snap.status.over));
-    }
-    lastMoveCount.current = count;
-  }, [snap]);
 
   useEffect(() => {
     return () => {

@@ -15,8 +15,14 @@
     "build": "npm run build -w @webajedrez/web",
     "start": "npm run start -w @webajedrez/web",
     "typecheck": "npm run typecheck -w @webajedrez/web",
+    "verify": "npm run typecheck && npm run build",
     "smoke": "node scripts/smoke.mjs",
-    "verify": "npm run typecheck && npm run build"
+    "smoke:bot": "node scripts/smoke-bot.mjs",
+    "check:uci": "node scripts/uci-moves-check.mjs",
+    "check:engine": "node scripts/engine-check.mjs",
+    "check:hint": "node scripts/hint-check.mjs",
+    "test:node": "npm run check:uci && npm run check:engine",
+    "test:browser": "npm run smoke && npm run smoke:bot && npm run check:hint"
   },
   "devDependencies": {
     "playwright": "^1.64.1"

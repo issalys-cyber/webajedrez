@@ -22,6 +22,8 @@ export type ChessBoardProps = {
   occupied: readonly string[];
   lastMove: { from: string; to: string } | null;
   checkSquare: string | null;
+  /** Jugada sugerida (por ejemplo, la pista del motor) que se resalta. */
+  hint?: { from: string; to: string } | null;
   interactive: boolean;
   onSquareClick: (square: string) => void;
   /** Devuelve si la jugada se acepta; si no, la pieza vuelve a su casilla. */
@@ -39,6 +41,7 @@ export function ChessBoard({
   occupied,
   lastMove,
   checkSquare,
+  hint,
   interactive,
   onSquareClick,
   onPieceDrop,
@@ -74,6 +77,12 @@ export function ChessBoard({
       at(selected).shadows.push("inset 0 0 0 3px rgba(242, 209, 107, 0.95)");
     }
 
+    if (hint) {
+      for (const square of [hint.from, hint.to]) {
+        at(square).shadows.push("inset 0 0 0 3px rgba(122, 162, 247, 0.95)");
+      }
+    }
+
     for (const square of targets) {
       if (occupiedSet.has(square)) {
         // Captura: anillo alrededor de la pieza.
@@ -97,7 +106,7 @@ export function ChessBoard({
       result[square] = style;
     }
     return result;
-  }, [checkSquare, lastMove, occupied, selected, targets]);
+  }, [checkSquare, hint, lastMove, occupied, selected, targets]);
 
   const options = useMemo<ChessboardOptions>(
     () => ({

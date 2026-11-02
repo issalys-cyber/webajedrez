@@ -3,15 +3,15 @@ import Link from "next/link";
 const modes = [
   {
     title: "Dos jugadores, un dispositivo",
-    detail: "Tablero completo, jugadas legales, PGN y FEN. Ya funciona.",
+    detail: "Tablero completo, jugadas legales, PGN y FEN.",
     href: "/play/local",
     ready: true,
   },
   {
     title: "Contra el motor",
-    detail: "Stockfish en tu navegador, con niveles. En construcción.",
-    href: null,
-    ready: false,
+    detail: "Stockfish en tu navegador, con 20 niveles de dificultad.",
+    href: "/play/bot",
+    ready: true,
   },
   {
     title: "Online 1v1",

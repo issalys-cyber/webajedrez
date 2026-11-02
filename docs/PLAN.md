@@ -76,18 +76,27 @@ npm run smoke                       # en otra
 
 ### Tareas
 
-- [ ] `lib/engine/worker.ts`: wrapper UCI sobre `stockfish@19.0.1` (build `--lite` y `--single-threaded` para evitar cabeceras COOP/COEP) dentro de un Web Worker.
-- [ ] Protocolo tipado: `uci`, `isready`, `position fen`, `go depth/movetime`, `stop`, parseo de `info depth ... score cp/mate`, `bestmove`.
-- [ ] Cancelación de búsqueda en curso al mover el jugador (evita respuestas obsoletas).
-- [ ] Configuración del motor diferente de `lib/engine/` en cliente y en tests (interfaz `Engine` inyectable, con un `FakeEngine` determinista para tests).
-- [ ] Pantalla `/play/bot`: selector de nivel (1-20), selector de color, control de tiempo opcional.
-- [ ] Tabla de niveles → parámetros de Stockfish (`Skill Level`, `depth`, `MultiPV`, `UCI_LimitStrength`). Ver ADR-004.
-- [ ] Indicador de "pensando" con el tiempo mínimo por nivel (para que el nivel 1 no responda en 30 ms y se sienta antinatural).
-- [ ] Barra de evaluación opcional (toggle), con la evaluación del motor.
-- [ ] Carga diferida: el motor **no** se descarga hasta que se pulsa "jugar". Mostrar progreso de descarga la primera vez.
-- [ ] Botón "pedir sugerencia" (usa el motor para resaltar la mejor jugada, limitado a N veces por partida).
-- [ ] Persistir la partida contra el bot en `localStorage` para no perderla al refrescar (sin backend todavía).
-- [ ] Página de "análisis" básica que reutiliza el worker sobre un PGN pegado.
+- [x] `lib/engine/client.ts`: cliente UCI sobre `stockfish@19.0.1`, build **`lite single-threaded`** (1,8 MB, sin cabeceras COOP/COEP) dentro de un Web Worker. El `README` del propio paquete recomienda justo este build.
+- [x] Protocolo tipado y **parseado como funciones puras** en `lib/engine/uci.ts`: `info depth ... score cp/mate`, `pv`, `bestmove`, más conversión de puntuación a probabilidad de victoria.
+- [x] Búsquedas **serializadas en cola**: el motor solo piensa una posición a la vez, para que la evaluación de fondo y la pista no se pisen. `stop()` solo se envía si hay búsqueda viva (un `stop` sin búsqueda genera un `bestmove` huérfano).
+- [x] Interfaz `EngineClient` inyectable: la lógica de la partida no depende de Stockfish.
+- [x] Pantalla `/play/bot`: selector de nivel 1-20, selector de color, cambio de nivel en vivo. **Pendiente:** control de tiempo (llega con la Fase 3, junto al reloj del servidor).
+- [x] Tabla de 20 niveles con `Skill Level`, `depth` y `movetime`, agrupada en cuatro tramos.
+- [x] Indicador de "pensando" y **tiempo mínimo por nivel** (350 ms en el nivel 1, 1,6 s en el 20).
+- [x] Barra de evaluación con toggle. La evaluación se recalcula en segundo plano en el turno del jugador.
+- [x] Carga diferida: verificado que el motor **no** se descarga antes de pulsar "empezar" (comprobación automatizada).
+- [x] Botón "pedir pista": resalta origen y destino en azul, con test que comprueba que la jugada sugerida es legal.
+- [ ] Persistir la partida en `localStorage`. **No hecho:** hoy se resuelve exportando el PGN.
+- [ ] Página de análisis sobre un PGN pegado. **No hecho:** es Fase 4 de verdad; antes hay que decidir si merece un worker aparte.
+
+### Verificación de esta fase
+
+| Suite | Qué comprueba | Aserciones |
+|---|---|---|
+| `npm run check:uci` | Conversión UCI → jugada (normal, promoción a dama y caballo, enroque, ilegal, basura) | 7 |
+| `npm run check:engine` | El motor calcula: mate en 1, captura gratuita, `Skill Level` | 5 |
+| `npm run smoke:bot` | En navegador: carga diferida, respuesta legal del motor, eval, pista, jugar con negras, móvil | 15 |
+| `npm run check:hint` | La pista sugiere una jugada legal reconstruyendo la posición con chess.js | 3 |
 
 ### Criterios de aceptación
 
