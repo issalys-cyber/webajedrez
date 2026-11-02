@@ -97,6 +97,14 @@ function rawSocket(gameId, token) {
 async function main() {
   await mkdir(SHOTS, { recursive: true });
 
+  // Perro guardián: si algo se queda colgado (un arranque en frío del Worker,
+  // por ejemplo), la prueba falla en vez de comerse siete minutos.
+  const watchdog = setTimeout(() => {
+    console.error("La prueba ha superado el tiempo máximo (180 s). Abortando.");
+    process.exit(1);
+  }, 180_000);
+  watchdog.unref?.();
+
   const health = await fetch(`${RT}/health`).then((response) => response.json());
   check("el servidor de partidas responde", health.ok === true, JSON.stringify(health));
 
@@ -333,6 +341,7 @@ async function main() {
     await browser.close();
   }
 
+  clearTimeout(watchdog);
   console.log(`\n${failed === 0 ? "Todo OK" : failed + " comprobaciones fallidas"}`);
   process.exit(failed === 0 ? 0 : 1);
 }
