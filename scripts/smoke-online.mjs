@@ -106,6 +106,22 @@ function rawSocket(gameId, token) {
   };
 }
 
+/** Abre un socket de prueba, reintentando una vez si el primero no arranca. */
+async function rawReady(gameId, token, attempts = 2) {
+  let lastError;
+  for (let i = 0; i < attempts; i += 1) {
+    const client = rawSocket(gameId, token);
+    try {
+      await client.ready();
+      return client;
+    } catch (error) {
+      lastError = error;
+      client.close();
+    }
+  }
+  throw lastError;
+}
+
 async function main() {
   await mkdir(SHOTS, { recursive: true });
 
@@ -207,8 +223,7 @@ async function main() {
 
     // ---------- El servidor manda: trampas rechazadas ----------
     // Ahora mismo mueven las blancas (ply 2).
-    const tramposoBlancas = rawSocket(gameId, whiteToken);
-    await tramposoBlancas.ready();
+    const tramposoBlancas = await rawReady(gameId, whiteToken);
 
     tramposoBlancas.send({ t: "move", cid: "ilegal", ply: 2, uci: "e2e5" });
     const ilegal = await tramposoBlancas.waitFor((m) => m.t === "ack" && m.cid === "ilegal");
@@ -228,8 +243,7 @@ async function main() {
 
     tramposoBlancas.close();
 
-    const tramposoNegras = rawSocket(gameId, blackToken);
-    await tramposoNegras.ready();
+    const tramposoNegras = await rawReady(gameId, blackToken);
     tramposoNegras.send({ t: "move", cid: "fuera", ply: 2, uci: "g8f6" });
     const fuera = await tramposoNegras.waitFor((m) => m.t === "ack" && m.cid === "fuera");
     check(
@@ -300,10 +314,8 @@ async function main() {
       body: JSON.stringify({ initialMs: 10_000, incrementMs: 0 }),
     }).then((response) => response.json());
 
-    const shortWhite = rawSocket(shortGame.gameId, shortGame.whiteToken);
-    const shortBlack = rawSocket(shortGame.gameId, shortGame.blackToken);
-    await shortWhite.ready();
-    await shortBlack.ready();
+    const shortWhite = await rawReady(shortGame.gameId, shortGame.whiteToken);
+    const shortBlack = await rawReady(shortGame.gameId, shortGame.blackToken);
 
     const began = Date.now();
     const end = await shortBlack.waitFor((message) => message.t === "end", 25_000);

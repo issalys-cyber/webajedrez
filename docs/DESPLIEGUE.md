@@ -59,6 +59,7 @@ npx wrangler deploy         # cada vez que cambie el servidor de partidas
 
   Al ser `NEXT_PUBLIC_*` se incrustan en el build: **después de añadirlas hay que redesplegar**.
 - **El servidor Node sigue existiendo** en `apps/rt/src/server.ts` para desarrollo sin wrangler (`npm run dev:rt`). Los dos comparten `GameRoom.ts` y `delivery.ts`, y la misma suite de pruebas pasa contra ambos.
+- **Arranque en frío.** Justo después de desplegar, la primera conexión WebSocket puede tardar en abrir mientras el Durable Object se instancia en el borde. Medido: en régimen normal abre en ~280 ms; tras un despliegue puede quedarse esperando. El cliente lo cubre con un **corte a los 12 s y reintento** (`CONNECT_TIMEOUT_MS` en `lib/realtime/client.ts`), y la prueba end-to-end reintenta una vez. Si algún día molesta, la solución es un `warmup` del Worker tras desplegar.
 
 ---
 
