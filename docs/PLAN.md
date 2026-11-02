@@ -43,7 +43,7 @@
 - [x] Exportar PGN, copiar PGN, importar PGN, copiar FEN (y carga desde FEN a través de cabeceras PGN).
 - [x] Layout responsive: tablero cuadrado que cabe en viewport móvil sin scroll (45 px por casilla a 390 px de ancho).
 - [x] Landing mínima con explicación de 3 líneas y un CTA "Jugar", más página `/creditos`.
-- [ ] Desplegar en Vercel. **Pendiente y bloqueado:** no hay `git` instalado en la máquina, así que no se puede hacer `git init` + push. Es el único paso manual que queda.
+- [x] Desplegar en Vercel en producción, con la app de GitHub instalada y **despliegue automático** en cada push a `main`.
 
 ### Verificación automatizada
 
