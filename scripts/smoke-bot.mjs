@@ -55,6 +55,14 @@ async function main() {
   });
   page.on("pageerror", (error) => consoleErrors.push(`pageerror: ${error.message}`));
 
+  // El WASM lo descarga el worker, así que no aparece en
+  // performance.getEntriesByType (solo el script del worker, y con retraso).
+  // El listener de red sí ve ambas peticiones.
+  const engineRequests = [];
+  context.on("request", (request) => {
+    if (request.url().includes("/engine/")) engineRequests.push(request.url());
+  });
+
   // ---------- Carga de la página ----------
   const response = await page.goto(`${BASE}/play/bot`, { waitUntil: "networkidle" });
   check("la página responde 200", response?.status() === 200, String(response?.status()));
@@ -62,9 +70,8 @@ async function main() {
   check("se renderizan las 64 casillas", (await page.locator("[data-square]").count()) === 64);
   check(
     "el motor NO se descarga antes de empezar",
-    (await page.evaluate(() =>
-      performance.getEntriesByType("resource").some((r) => r.name.includes("stockfish")),
-    )) === false,
+    engineRequests.length === 0,
+    engineRequests.join(", "),
   );
   check(
     "el selector de nivel está y empieza en 5",
@@ -81,18 +88,28 @@ async function main() {
   await page.getByTestId("level-slider").fill("1");
 
   // ---------- Empezar jugando con blancas ----------
+  // La petición del WASM se espera con waitForEvent (registrado ANTES del
+  // clic): comprobarla con una lista puede llegar un instante tarde.
+  const wasmRequest = context
+    .waitForEvent("request", {
+      predicate: (request) => request.url().endsWith(".wasm"),
+      timeout: 40000,
+    })
+    .catch(() => null);
+
   await page.getByRole("button", { name: /Blancas/ }).click();
 
   // El motor tarda en cargar: se espera a que el estado deje de cargar.
   await page
     .getByTestId("turn-status")
     .filter({ hasText: /Tu turno|motor/i })
-    .waitFor({ timeout: 30000 });
+    .waitFor({ timeout: 40000 });
+
+  const wasm = await wasmRequest;
   check(
     "el motor se descarga al empezar (1,8 MB)",
-    (await page.evaluate(() =>
-      performance.getEntriesByType("resource").some((r) => r.name.includes("stockfish")),
-    )) === true,
+    Boolean(wasm),
+    wasm ? wasm.url().split("/").pop() : "no se ha visto la petición del WASM",
   );
   check(
     "empieza el turno del jugador",
